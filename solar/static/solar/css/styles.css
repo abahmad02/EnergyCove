@@ -1,0 +1,326 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+nav.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    padding: 10px 20px;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    color: black;
+    font-size: 1.5rem;
+}
+
+.navbar-brand img {
+    margin-right: 10px;
+}
+
+.navbar-links {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.navbar-links li {
+    margin-left: 20px;
+}
+
+.navbar-links a {
+    color: black;
+    text-decoration: none;
+}
+
+.btn-quote {
+    background-color: rgb(10, 201, 10);
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-toggle {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.navbar-toggle span {
+    background-color: black;
+    height: 2px;
+    width: 25px;
+    margin: 4px 0;
+}
+
+@media (max-width: 768px) {
+    .navbar-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 50px;
+        right: 20px;
+        background-color: #333;
+        width: 150px;
+    }
+
+    .navbar-links li {
+        margin: 10px 0;
+        text-align: right;
+    }
+
+    .navbar-toggle {
+        display: flex;
+    }
+}
+
+header {
+    background: url('/static/solar/images/solar-panels.jpg') no-repeat center center/cover;
+    background-attachment: fixed;
+    position: relative;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 1s ease-in-out;
+    padding-top: 60px; /* to avoid navbar overlap */
+}
+
+.header-content {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.header-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.header-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.header-content h1 {
+    font-size: 2.5rem;
+    margin: 0;
+}
+
+.header-content p {
+    font-size: 1.2rem;
+    margin: 20px 0;
+}
+
+.btn {
+    background-color: green;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    position: relative;
+    z-index: 1;
+}
+
+.btn-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.btn-quote {
+    background-color: rgb(10, 201, 10);
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    position: relative;
+    z-index: 1;
+    width: 200px; /* Adjust width as needed */
+    height: 50px; /* Adjust height as needed */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.services {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping to multiple rows if needed */
+    justify-content: center; /* Center the service cards horizontally */
+    padding: 0 5%; /* Removed top padding to position it closer to the image */
+    margin-top: -100px; /* Adjust this value to overlap the image */
+    background-color: transparent; /* Make the background transparent to overlap the image */
+    position: relative; /* Ensure the cards are positioned relative to the header */
+    z-index: 2; /* Ensure the cards are above the image but below the text */
+}
+
+.service-card {
+    width: 23%; /* Width of each service card */
+    margin: 10px; /* Added margin for spacing between cards */
+    transition: transform 0.3s ease-in-out;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    background-color: white; /* White background for visibility */
+    z-index: 3; /* Ensure the cards are above the header image */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add some shadow for better visibility */
+    border-radius: 8px;
+}
+
+.service-card:hover {
+    transform: translateY(-10px);
+}
+
+.service {
+    text-align: center;
+    padding: 20px;
+}
+
+.service h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.service img {
+    max-width: 100px;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .services {
+        flex-direction: column; /* Stack services vertically on small screens */
+        align-items: center; /* Center the items */
+        padding: 20px; /* Adjust padding for smaller screens */
+        margin-top: 0; /* Remove negative margin on smaller screens */
+    }
+
+    .service-card {
+        width: 100%; /* Full width on small screens */
+        margin-bottom: 20px;
+    }
+}
+
+
+
+.solar-revolution, .solar-monitoring {
+    padding: 50px 0;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 1s ease-in-out;
+}
+
+.revolution-details {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.revolution-details img {
+    width: 50%;
+    margin-right: 20px;
+}
+
+.solar-monitoring {
+    background-color: #f9f9f9;
+}
+
+.solar-monitoring img {
+    width: 40%;
+}
+
+.animate {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+}
+
+.animate-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Form specific styles */
+
+.form-container {
+    max-width: 600px;
+    margin: 100px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.form-container h1 {
+    margin-bottom: 20px;
+    font-size: 2rem;
+    color: #333;
+}
+
+.form-container form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-container label {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-container input {
+    width: 80%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.form-container input:focus {
+    outline: none;
+    border-color: #333;
+}
+
+.btn-submit {
+    background-color: rgb(10, 201, 10);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn-submit:hover {
+    background-color: #008000;
+}
+

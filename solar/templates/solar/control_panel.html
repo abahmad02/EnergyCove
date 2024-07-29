@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Application Control Panel</title>
+    <link rel="stylesheet" href="{% static 'solar/css/control.css' %}">
+</head>
+<body>
+    {% csrf_token %}
+    <div class="container">
+        <h1>Solar Application Control Panel</h1>
+        <div class="section panel-section">
+            <h2>Solar Panels</h2>
+            <button onclick="fetchPanels()">View Panels</button>
+            <button onclick="showAddPanelForm()">Add New Panel</button>
+            <div id="panel-list"></div>
+            <div id="add-panel-form" style="display: none;">
+                <h3>Add New Panel</h3>
+                <input type="text" id="panel-brand" placeholder="Brand">
+                <input type="number" id="panel-price" placeholder="Price per Watt">
+                <input type="number" id="panel-power" placeholder="Power">
+                <button onclick="addPanel()">Add Panel</button>
+            </div>
+            <div id="edit-panel-form" style="display: none;">
+                <h3>Edit Panel</h3>
+                <input type="hidden" id="edit-panel-id">
+                <input type="text" id="edit-panel-brand" placeholder="Brand">
+                <input type="number" id="edit-panel-price" placeholder="Price per Watt">
+                <input type="number" id="edit-panel-power" placeholder="Power">
+                <button onclick="updatePanel()">Update Panel</button>
+            </div>
+        </div>
+        <div class="section inverter-section">
+            <h2>Inverters</h2>
+            <button onclick="fetchInverters()">View Inverters</button>
+            <button onclick="showAddInverterForm()">Add New Inverter</button>
+            <div id="inverter-list"></div>
+            <div id="add-inverter-form" style="display: none;">
+                <h3>Add New Inverter</h3>
+                <input type="text" id="inverter-brand" placeholder="Brand">
+                <input type="number" id="inverter-price" placeholder="Price">
+                <input type="number" id="inverter-power" placeholder="Power">
+                <button onclick="addInverter()">Add Inverter</button>
+            </div>
+            <div id="edit-inverter-form" style="display: none;">
+                <h3>Edit Inverter</h3>
+                <input type="hidden" id="edit-inverter-id">
+                <input type="text" id="edit-inverter-brand" placeholder="Brand">
+                <input type="number" id="edit-inverter-price" placeholder="Price">
+                <input type="number" id="edit-inverter-power" placeholder="Power">
+                <button onclick="updateInverter()">Update Inverter</button>
+            </div>
+        </div>
+        <div class="section customer-section">
+            <h2>Potential Customers</h2>
+            <button onclick="fetchCustomers()">View Customers</button>
+            <div id="customer-list"></div>
+        </div>
+        <div class="section cost-section">
+            <h2>Set Prices</h2>
+            <div class="price-container">
+                <label for="price-per-watt">Frame Cost per Watt</label>
+                <input type="number" id="price-per-watt" placeholder="Frame Cost per Watt"><br>
+            </div>
+            
+            <div class="price-container">
+                <label for="installation-cost">Installation Cost per Watt</label>
+                <input type="number" id="installation-cost" placeholder="Installation Cost per Watt"><br>
+            </div>
+            
+            <button onclick="setPrices()">Set Prices</button>
+            
+        </div>
+    </div>
+    <script src="{% static 'solar/js/control.js' %}"></script>
+</body>
+</html>
