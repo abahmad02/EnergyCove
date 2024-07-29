@@ -49,11 +49,11 @@ def generate_invoice_view(request):
 
     return redirect(reverse('your_form_page_name'))
 
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def control_panel(request):
     return render(request, 'solar/control_panel.html')
 
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def panels(request):
     if request.method == 'GET':
         panels = Panel.objects.all().values()
@@ -68,7 +68,7 @@ def panels(request):
         )
         return JsonResponse({'message': 'Panel added successfully!'})
 
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def inverters(request):
     if request.method == 'GET':
         inverters = Inverter.objects.all().values()
@@ -83,13 +83,13 @@ def inverters(request):
         )
         return JsonResponse({'message': 'Inverter added successfully!'})
 
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def customers(request):
     customers = PotentialCustomers.objects.all().values()
     return JsonResponse(list(customers), safe=False)
 
 @csrf_exempt
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def panel_list(request):
     if request.method == 'GET':
         panels = Panel.objects.all().values()
@@ -105,7 +105,7 @@ def panel_list(request):
         return JsonResponse({"id": panel.id}, status=201)
 
 @csrf_exempt
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def panel_detail(request, id):
     panel = get_object_or_404(Panel, id=id)
     if request.method == 'PUT':
@@ -121,7 +121,7 @@ def panel_detail(request, id):
         return JsonResponse({"id": id}, status=200)
 
 @csrf_exempt
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def inverter_list(request):
     if request.method == 'GET':
         inverters = Inverter.objects.all().values()
@@ -137,7 +137,7 @@ def inverter_list(request):
         return JsonResponse({"id": inverter.id}, status=201)
 
 @csrf_exempt
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def inverter_detail(request, id):
     inverter = get_object_or_404(Inverter, id=id)
     if request.method == 'PUT':
@@ -153,7 +153,7 @@ def inverter_detail(request, id):
         return JsonResponse({"id": id}, status=200)
 
 @csrf_exempt
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def set_prices(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -166,14 +166,14 @@ def set_prices(request):
         return JsonResponse({"status": "success"}, status=200)
 
 @csrf_exempt
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def customer_list(request):
     if request.method == 'GET':
         customers = PotentialCustomers.objects.all().values()
         return JsonResponse(list(customers), safe=False)
 
 @csrf_exempt
-@user_passes_test(lambda u: u.is_staff)
+#@user_passes_test(lambda u: u.is_staff)
 def get_prices(request):
     if request.method == 'GET':
         frame_cost = variableCosts.objects.filter(cost_name='Frame Cost per Watt').first()
