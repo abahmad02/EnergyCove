@@ -6,7 +6,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
-from solar.invoice_generator.invoicemaker import generate_invoice 
 
 import datetime
 
@@ -16,7 +15,8 @@ def get_bill_info(reference_number, city):
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
 
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+    driver_path = 'C:\chromedriver-win64\chromedriver.exe'
+    driver = webdriver.Chrome(service=ChromeService(driver_path), options=options)
     
     try:
         url = "https://bill.pitc.com.pk/mepcobill"
@@ -236,4 +236,4 @@ def bill_reader(reference_number, address):
 
 if __name__ == '__main__':
     reference_number = '04151722337324'  # Replace with the actual reference number
-    bill_reader(reference_number)
+    bill_reader(reference_number, "Shop 1,Crystal Arcade")

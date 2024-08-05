@@ -10,7 +10,9 @@
 <body>
     <nav class="navbar">
         <div class="navbar-brand">
-            <img src="{% static 'solar/images/logo.png' %}" alt="Energy Cove Logo">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'solar/images/logo.png' %}" alt="Energy Cove Logo">
+            </a>
         </div>
         <ul class="navbar-links">
             <li><a href="#home">Home</a></li>

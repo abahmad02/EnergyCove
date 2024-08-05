@@ -40,10 +40,28 @@ def generate_invoice_view(request):
             panel_price = 20000
             net_metering = 150000
             total_cost = system_size * panel_price + inverter_price + net_metering + 200000
-            generate_invoice(system_size, panels_needed, panel_power, inverter_price, brand, panel_price, net_metering, 50000, 50000, 50000, 50000, total_cost, name, address, phone_number)
+            #generate_invoice(system_size, panels_needed, panel_power, inverter_price, brand, panel_price, net_metering, 50000, 50000, 50000, 50000, total_cost, name, address, phone_number)
             # Process invoice_data as needed
             print(invoice_data)
-            return render(request, 'solar/index.html', {'invoice_data': invoice_data})
+            response_data = {
+                'name': name,
+                'address': address,
+                'phone': phone_number,
+                'reference_number': reference_number,
+                'electricity_bill': invoice_data['Payable Within Due Date'],
+                'monthly_units': invoice_data['Units Consumed'],
+                'yearly_units': invoice_data['Total Yearly Units'],
+                'system_size': system_size,
+                'panel_brand': 'Jinko Solar',
+                'panel_quantity': panels_needed,
+                'panel_price': panel_price,
+                'inverter_brand': brand,
+                'inverter_price': inverter_price,
+                'frame_cost': 200,
+                'installation_cost': 200,
+                'total_cost': total_cost
+            }
+            return JsonResponse(response_data)
         except Exception as e:
             return render(request, 'invoice_error.html', {'error_message': str(e)})
 
