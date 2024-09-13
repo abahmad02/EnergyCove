@@ -14,6 +14,12 @@ def get_bill_info(reference_number, city):
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_experimental_option(
+        "prefs", {
+            # block image loading
+            "profile.managed_default_content_settings.images": 2,
+        }
+    )
 
     driver_path = 'C:\chromedriver-win64\chromedriver.exe'
     driver = webdriver.Chrome(service=ChromeService(driver_path), options=options)
@@ -51,26 +57,36 @@ def get_bill_info(reference_number, city):
         if subdivision != "Not found":
             location = city
             print(f"Location: {location}")
-            latitude, longitude = get_coordinates(location)
-            bill_info['Latitude'] = latitude
-            bill_info['Longitude'] = longitude
+            #latitude, longitude = get_coordinates(location)
+            #bill_info['Latitude'] = latitude
+            #bill_info['Longitude'] = longitude
 
-            if latitude and longitude:
-                st_date = 2022
-                data = get_nasa_power_monthly_data(latitude, longitude, st_date, st_date, "ALLSKY_SFC_SW_DWN")
-                solar_irradiance = extract_solar_radiance_data(data)
-                bill_info['Solar Irradiance'] = solar_irradiance
+            #if latitude and longitude:
+                #st_date = 2022
+                #data = get_nasa_power_monthly_data(latitude, longitude, st_date, st_date, "ALLSKY_SFC_SW_DWN")
+                #solar_irradiance = extract_solar_radiance_data(data)
+                #bill_info['Solar Irradiance'] = solar_irradiance
 
         # Generate the array of months
-        if bill_info['Due Date'] != "Not found":
-            bill_info['Year Data'] = generate_year_data(bill_info['Due Date'])
+        if bill_info['Issue Date'] != "Not found":
+            bill_info['Year Data'] = generate_year_data(bill_info['Issue Date'])
             bill_info['Monthly Units'] = extract_monthly_units(driver, bill_info['Year Data'])
             bill_info['Total Yearly Units'] = calculate_total_units(driver, bill_info['Monthly Units'])
+            bill_info['Max Units'] = calculate_max_units(driver, bill_info['Monthly Units'])
 
         return bill_info
 
     finally:
         driver.quit()
+
+def calculate_max_units(driver, monthly_units):
+    try:
+        max_units = max(int(units) for units in monthly_units.values() if units.isdigit())
+        print(f"Max units: {max_units}")
+        return max_units
+    except Exception as e:
+        print(f"Error calculating max units: {e}")
+        return "Error"
 
 def extract_name(driver):
     try:
@@ -179,12 +195,12 @@ def get_coordinates(address):
         print(f"Error requesting coordinates: {e}")
         return None, None
 
-def generate_year_data(due_date_str):
+def generate_year_data(issue_date_str):
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     try:
-        due_date = datetime.datetime.strptime(due_date_str, "%d %b %y")
-        start_month_index = due_date.month - 1
-        start_year = due_date.year - 1
+        issue_date = datetime.datetime.strptime(issue_date_str, "%d %b %y")
+        start_month_index = issue_date.month - 1
+        start_year = issue_date.year - 1
         year_data = []
 
         for i in range(12):
@@ -207,8 +223,9 @@ def extract_monthly_units(driver, year_data):
                 month = cells[0].text.strip()[:3] + cells[0].text.strip()[-2:]  # e.g., "Jun23"
                 units = cells[1].text.strip()
                 monthly_units[month] = units
-
         # Match with year_data
+        monthly_units[year_data[-1]] = extract_units_consumed(driver)
+        #print(f"Monthly units: {monthly_units}")
         return {month: monthly_units.get(month, "0") for month in year_data}
     except Exception as e:
         print(f"Error extracting monthly units: {e}")
@@ -229,11 +246,12 @@ def bill_reader(reference_number, address):
     city = 'Multan'  # Replace with the actual city
     address = address + ", " + city
     bill_info = get_bill_info(reference_number, address)
-    print(bill_info)
+    #print(bill_info)
+    print("Done")
     return(bill_info)
     # Call the function from invoicemaker.py
     # create_invoice_from_bill_info(bill_info)
 
 if __name__ == '__main__':
-    reference_number = '04151722337324'  # Replace with the actual reference number
+    reference_number = '04151722337322'  # Replace with the actual reference number
     bill_reader(reference_number, "Shop 1,Crystal Arcade")

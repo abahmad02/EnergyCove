@@ -21,28 +21,79 @@ def generate_invoice_view(request):
         reference_number = request.POST.get('reference_number')
         phone_number = request.POST.get('phone_number')
         address = request.POST.get('address')
+        
         try:
             invoice_data = bill_reader(reference_number, address)
             name = invoice_data['Name']
-            panel_power = 545  # 545 watts
-            potential_customer = PotentialCustomers.objects.create(name=name, address=address, phone=phone_number, reference_number=reference_number)
+            #panel_power = 545  # 545 watts per panel
+            panel = Panel.objects.get(default_choice=True)
+            panel_power = panel.power
+            panel_price = panel.price
+            panel_brand = panel.brand
+            potential_customer = PotentialCustomers.objects.create(
+                name=name, address=address, phone=phone_number, reference_number=reference_number)
             potential_customer.save()
-            total_power_of_1_panel = 1780 * 0.8  # 80% efficiency
-            print(int(invoice_data['Total Yearly Units']))
-            panels_needed = int(invoice_data['Total Yearly Units']) / total_power_of_1_panel
-            print(f"Panels needed: {panels_needed}")
-            panels_needed = math.ceil(panels_needed)
-            print(f"Panels needed: {panels_needed}")
-            system_size = math.ceil((panels_needed * panel_power)/1000)
-            print(f"System size: {system_size}")
-            inverter_price = 200000
-            brand = 'GoodWe'
-            panel_price = 20000
-            net_metering = 150000
-            total_cost = system_size * panel_price + inverter_price + net_metering + 200000
-            #generate_invoice(system_size, panels_needed, panel_power, inverter_price, brand, panel_price, net_metering, 50000, 50000, 50000, 50000, total_cost, name, address, phone_number)
-            # Process invoice_data as needed
-            print(invoice_data)
+
+            # Calculate recommended system size based on the customer's consumption
+            daily_energy = (panel_power * 9) / 1000  # 9 hours of sunlight
+            annual_energy = daily_energy * 365
+            total_power_of_1_panel = float(annual_energy) * 0.8  # 80% efficiency per panel
+            panels_needed = math.ceil((int(invoice_data['Max Units']) * 12) / total_power_of_1_panel)
+            system_size_recommended = math.ceil((panels_needed * panel_power) / 1000)
+
+            # Calculate sizes for smaller and larger systems
+            system_size_smaller = max(system_size_recommended - 2, 1)  # Ensure at least 1kW
+            system_size_larger = system_size_recommended + 2
+
+            # Pricing calculations for all three systems
+            # Find the inverter with the same power or closest to the system size
+            inverters_rec = Inverter.objects.filter(power__gte=system_size_recommended).order_by('power')
+            if inverters_rec.exists():
+                inverter_rec = inverters_rec.first()
+                print(inverter_rec)
+                inverter_price_rec = inverter_rec.price
+            else:
+                # Handle the case when no inverter is available with the required power
+                inverter_price_rec = 0
+            inverters_small = Inverter.objects.filter(power__gte=system_size_smaller).order_by('power')
+            if inverters_small.exists():
+                inverter_small = inverters_small.first()
+                print(inverter_small)
+                inverter_price_small = inverter_small.price
+            else:
+                # Handle the case when no inverter is available with the required power
+                inverter_price_small = 0
+            inverters_large = Inverter.objects.filter(power__gte=system_size_larger).order_by('power')
+            if inverters_large.exists():
+                inverter_large = inverters_large.first()
+                print(inverter_large)
+                inverter_price_large = inverter_large.price
+            else:
+                # Handle the case when no inverter is available with the required power
+                inverter_price_large = 0
+            net_metering = variableCosts.objects.filter(cost_name='Net Metering').first().cost
+            installation_cost_per_watt = variableCosts.objects.filter(cost_name='Installation Cost per Watt').first().cost
+            frame_cost_per_watt = variableCosts.objects.filter(cost_name='Frame Cost per Watt').first().cost
+            
+            cabling_cost = 50000
+            electrical_and_mechanical_cost = 50000
+            # Total cost calculation for each system
+            def calculate_total_cost(system_size, inverter_price, installation_cost, frame_cost):
+                print(system_size, inverter_price, installation_cost, frame_cost)
+                print(system_size * panel_price * panel_power)  
+                return (system_size * panel_price * panel_power) + inverter_price + net_metering + installation_cost + frame_cost + cabling_cost + electrical_and_mechanical_cost
+            
+            installation_rec = system_size_recommended * installation_cost_per_watt * 1000
+            installation_small = system_size_smaller * installation_cost_per_watt * 1000
+            installation_large = system_size_larger * installation_cost_per_watt * 1000
+            frame_cost_rec = system_size_recommended * frame_cost_per_watt * 1000
+            frame_cost_small = system_size_smaller * frame_cost_per_watt * 1000
+            frame_cost_large = system_size_larger * frame_cost_per_watt * 1000
+            total_cost_recommended = calculate_total_cost(panels_needed, inverter_price_rec, installation_rec, frame_cost_rec)
+            total_cost_smaller = calculate_total_cost(math.ceil(system_size_smaller * 1000 / panel_power), inverter_price_small, installation_small, frame_cost_small)
+            total_cost_larger = calculate_total_cost(math.ceil(system_size_larger * 1000 / panel_power), inverter_price_large, installation_large, frame_cost_large)
+
+            # Prepare response data for all three systems
             response_data = {
                 'name': name,
                 'address': address,
@@ -51,21 +102,107 @@ def generate_invoice_view(request):
                 'electricity_bill': invoice_data['Payable Within Due Date'],
                 'monthly_units': invoice_data['Units Consumed'],
                 'yearly_units': invoice_data['Total Yearly Units'],
-                'system_size': system_size,
-                'panel_brand': 'Jinko Solar',
-                'panel_quantity': panels_needed,
                 'panel_price': panel_price,
-                'inverter_brand': brand,
-                'inverter_price': inverter_price,
-                'frame_cost': 200,
-                'installation_cost': 200,
-                'total_cost': total_cost
+                'panel_brand': panel_brand,
+                'panel_power': panel_power,
+                'net_metering': net_metering,               
+                # Recommended system
+                'recommended': {
+                    'system_size': system_size_recommended,
+
+                    'panel_quantity': panels_needed,
+                    'inverter_brand': inverter_rec.brand,
+                    'inverter_price_rec': inverter_price_rec,
+                    'frame_cost': frame_cost_rec,
+                    'installation_cost': installation_rec,
+                    'total_cost': total_cost_recommended,
+                    'cabling_cost': 50000,
+                    'electrical_and_mechanical_cost': 50000
+                },
+                # Smaller system
+                'smaller': {
+                    'system_size': system_size_smaller,
+                    'panel_quantity': math.ceil(system_size_smaller * 1000 / panel_power),
+                    'inverter_brand': inverter_small.brand,
+                    'frame_cost': frame_cost_small,
+                    'installation_cost': installation_small,
+                    'total_cost': total_cost_smaller,
+                    'inverter_price_small': inverter_price_small,
+                    'cabling_cost': 50000,
+                    'electrical_and_mechanical_cost': 50000
+                },
+                # Larger system
+                'larger': {
+                    'system_size': system_size_larger,
+                    'panel_quantity': math.ceil(system_size_larger * 1000 / panel_power),
+                    'inverter_brand': inverter_large.brand,
+                    'frame_cost': frame_cost_large,
+                    'installation_cost': installation_large,
+                    'total_cost': total_cost_larger,
+                    'inverter_price_large': inverter_price_large,
+                    'cabling_cost': 50000,
+                    'electrical_and_mechanical_cost': 50000
+                }
             }
+            
             return JsonResponse(response_data)
+
         except Exception as e:
-            return render(request, 'invoice_error.html', {'error_message': str(e)})
+            return render(request, 'index.html', {'error_message': str(e)})
 
     return redirect(reverse('your_form_page_name'))
+
+def generate_invoice_for_system(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        system_size = data.get('system_size')
+        panel_amount = data.get('panel_amount')
+        panel_power = data.get('panel_power')
+        inverter_price = data.get('inverter_price')
+        inverter_brand = data.get('inverter_brand')
+        print(data.get('panel_price'))
+        price_of_panels = float(data.get('panel_price')) * int(panel_amount) * float(panel_power)
+        net_metering = data.get('net_metering')
+        total_cost = data.get('total_cost')
+        if total_cost is not None:
+            try:
+                total_cost = float(total_cost)
+            except ValueError:
+                total_cost = 0.0  # or any default value you prefer
+        else:
+            total_cost = 0.0
+        customer_name = data.get('customer_name')
+        print(customer_name)
+        customer_address = data.get('customer_address')
+        customer_contact = data.get('customer_contact')
+        installation_cost_per_watt = data.get('installation_cost')
+        frame_cost_per_watt = data.get('frame_cost')
+        cabling_cost = data.get('cabling_cost')
+        electrical_and_mechanical_cost = data.get('electrical_and_mechanical_cost')
+        #generate_invoice(system_size, panel_amount, panel_power, inverter_price, inverter_brand, price_of_panels, net_metering, installation_cost_per_watt, cabling_cost, frame_cost_per_watt, electrical_and_mechanical_cost, total_cost, customer_name, customer_address, customer_contact)
+        invoice_data = {
+            'system_size': system_size,
+            'panel_amount': panel_amount,
+            'panel_power': panel_power,
+            'inverter_price': inverter_price,
+            'inverter_brand': inverter_brand,
+            'price_of_panels': price_of_panels,
+            'net_metering': net_metering,
+            'total_cost': total_cost,
+            'customer_name': customer_name,
+            'customer_address': customer_address,
+            'customer_contact': customer_contact,
+            'installation_cost_per_watt': installation_cost_per_watt,
+            'frame_cost_per_watt': frame_cost_per_watt,
+            'cabling_cost': cabling_cost,
+            'electrical_and_mechanical_cost': electrical_and_mechanical_cost
+        }
+        # Logic to generate the invoice based on the data
+        # Example: Create an invoice record, generate a PDF, etc.
+
+        # Return a success response
+        return JsonResponse(invoice_data)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
 
 #@user_passes_test(lambda u: u.is_staff)
 def control_panel(request):
@@ -82,9 +219,21 @@ def panels(request):
             brand=data['brand'],
             price=data['price'],
             power=data['power'],
-            availability=data['availability']
         )
         return JsonResponse({'message': 'Panel added successfully!'})
+    
+def set_default_panel(request, panel_id):
+    # Set all default_choice fields to False
+    Panel.objects.update(default_choice=False)
+
+    # Set the selected panel's default_choice to True
+    try:
+        panel = Panel.objects.get(id=panel_id)
+        panel.default_choice = True
+        panel.save()
+        return JsonResponse({'success': True})
+    except Panel.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Panel not found'}, status=404)
 
 #@user_passes_test(lambda u: u.is_staff)
 def inverters(request):
@@ -181,6 +330,9 @@ def set_prices(request):
         variableCosts.objects.update_or_create(
             cost_name='Installation Cost per Watt', defaults={'cost': data['installationCost']}
         )
+        variableCosts.objects.update_or_create(
+            cost_name='Net Metering', defaults={'cost': data['netMetering']}
+        )
         return JsonResponse({"status": "success"}, status=200)
 
 @csrf_exempt
@@ -196,8 +348,11 @@ def get_prices(request):
     if request.method == 'GET':
         frame_cost = variableCosts.objects.filter(cost_name='Frame Cost per Watt').first()
         installation_cost = variableCosts.objects.filter(cost_name='Installation Cost per Watt').first()
+        net_metering = variableCosts.objects.filter(cost_name='Net Metering').first()
+        print(net_metering.cost)
         response_data = {
             'frame_cost_per_watt': frame_cost.cost if frame_cost else '',
             'installation_cost_per_watt': installation_cost.cost if installation_cost else '',
+            'net_metering': net_metering.cost if net_metering else ''
         }
         return JsonResponse(response_data, safe=False)

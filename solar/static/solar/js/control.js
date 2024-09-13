@@ -22,15 +22,38 @@ function fetchPanels() {
             let panelList = document.getElementById('panel-list');
             panelList.innerHTML = '';
             data.forEach(panel => {
+                console.log(panel);
                 panelList.innerHTML += `
                     <div>
-                        ${panel.brand} - PKR ${panel.price} Per W - ${panel.power}W
+                        ${panel.brand} - PKR ${panel.price} Per W - ${panel.power}W - Default: ${panel.default_choice ? 'Yes' : 'No'}
+                        <button onclick="setDefaultPanel(${panel.id})">Set Default</button>
                         <button onclick="showEditPanelForm(${panel.id}, '${panel.brand}', ${panel.price}, ${panel.power})">Edit</button>
                         <button onclick="deletePanel(${panel.id})">Delete</button>
                     </div>
                 `;
             });
         });
+}
+
+
+function setDefaultPanel(panelId) {
+    fetch(`/api/set-default-panel/${panelId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken  // Ensure CSRF protection
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Default panel set successfully!');
+            fetchPanels();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => console.error('Error:', error));
 }
 
 function fetchInverters() {
@@ -202,6 +225,7 @@ function deleteInverter(id) {
 function setPrices() {
     const pricePerWatt = document.getElementById('price-per-watt').value;
     const installationCost = document.getElementById('installation-cost').value;
+    const netMetering = document.getElementById('net-metering').value;
     
     fetch('/api/set-prices/', {
         method: 'POST',
@@ -209,7 +233,7 @@ function setPrices() {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrftoken
         },
-        body: JSON.stringify({ pricePerWatt, installationCost })
+        body: JSON.stringify({ pricePerWatt, installationCost, netMetering })
     }).then(response => response.json())
     .then(data => {
         alert('Prices set successfully!');
@@ -226,5 +250,6 @@ function fetchPrices() {
         .then(data => {
             document.getElementById('price-per-watt').value = data.frame_cost_per_watt || '';
             document.getElementById('installation-cost').value = data.installation_cost_per_watt || '';
+            document.getElementById('net-metering').value = data.net_metering || '';
         });
 }

@@ -6,6 +6,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Energy Cove - Solar Installers</title>
     <link rel="stylesheet" href="{% static 'solar/css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4caf50;
+            --secondary-color: #f3f3f3;
+            --text-color: #333;
+            --light-text-color: #666;
+            --background-color: #f9f9f9;
+            --border-color: #ddd;
+        }
+
+        body, h1, h3, p, input, button {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            margin-top: 100px; /* Push the content down to avoid overlap with navbar */
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand img {
+            height: 40px;
+        }
+
+        .navbar-links {
+            list-style: none;
+            display: flex;
+            gap: 15px;
+        }
+
+        .navbar-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .navbar-links a:hover {
+            color: var(--primary-color);
+        }
+    </style>    
 </head>
 <body>
     <nav class="navbar">
@@ -20,7 +74,7 @@
             <li><a href="#revolution">Revolution</a></li>
             <li><a href="#monitoring">Monitoring</a></li>
         </ul>
-        <a href="{% url 'quotation' %}" class="btn-quote">Get a Quote</a>
+        <a href="{% url 'quotation' %}" style="margin-right: 30px;" class="btn-quote">Get a Quote</a>
         <div class="navbar-toggle">
             <span></span>
             <span></span>

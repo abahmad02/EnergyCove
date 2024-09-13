@@ -8,6 +8,12 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import tempfile
 import sys
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 import math
 
 def merge_pdfs(pdf_list, output_filename):
@@ -81,6 +87,44 @@ def replace_text(input_pdf, output_pdf, replacements, zoom_factor=3.0):
     # Clean up
     doc.close()
     
+def send_email_with_attachment(subject, body, to_email, attachment_path):
+    from_email = "royaltaj.care@gmail.com"  # replace with your email
+    from_password = "gxsd elyy djzb kldu"  # replace with your email password
+
+    # Create a multipart message
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+
+    # Attach the body with the msg instance
+    msg.attach(MIMEText(body, 'plain'))
+
+    # Open the file as binary mode
+    with open(attachment_path, "rb") as attachment:
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(attachment.read())
+
+    # Encode the file in ASCII characters to send by email    
+    encoders.encode_base64(part)
+
+    # Add header as key/value pair to the attachment part
+    part.add_header(
+        "Content-Disposition",
+        f"attachment; filename= {os.path.basename(attachment_path)}",
+    )
+
+    # Attach the attachment to the MIMEMultipart object
+    msg.attach(part)
+
+    # Create SMTP session for sending the mail
+    server = smtplib.SMTP('smtp.gmail.com', 587)  # Use your SMTP server details
+    server.starttls()  # enable security
+    server.login(from_email, from_password)  # login with your email and password
+    text = msg.as_string()
+    server.sendmail(from_email, to_email, text)
+    server.quit()
+    
 
 def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
                      brand_of_inverter, price_of_panels, netmetering_costs,
@@ -93,7 +137,7 @@ def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
     pdf.set_font("Arial", size=20)
     pdf.set_text_color(0, 0, 0) 
     #total_cost = (panel_amount * price_of_panels) + price_of_inverter + netmetering_costs + installation_costs + cabling_costs + structure_costs + electrical_and_mechanical_costs
-    advance_payment = total_cost * 0.9
+    advance_payment = float(total_cost) * 0.9
     # Add the header section
     pdf.cell(240, 10, txt="Energy Cove Solar System Invoice", ln=1, align="C")
     pdf.set_font("Arial", size=12)
@@ -145,7 +189,7 @@ def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
     pdf.cell(63.3, 10, txt=f"Power Rating: {system_size}kW", border=1, ln=0, align="L", fill=True)
     pdf.cell(63.4, 10, txt=f"Model: On-Grid", border=1, ln=0, align="L", fill=True)
     pdf.cell(15, 10, txt="1", border="L,R", align="C")  # Empty cell to create space
-    pdf.cell(20, 10, txt=f"{price_of_inverter}", border="L,R", ln=1, align="R")  # Empty cell to create space
+    pdf.cell(20, 10, txt=f"{int(float(price_of_inverter))}", border="L,R", ln=1, align="R")  # Empty cell to create space
     pdf.cell(15, 10, txt="", border=0)  # Empty cell to create space
     pdf.cell(190, 10, txt=f"Monitoring Device Included/ 5 Years warranty / System Produces 1200 Units per month", border=1, ln=0, align="L", fill=True)
     pdf.cell(15, 10, txt=f"", border="L, R,B", ln=0, align="C", fill=True)
@@ -184,7 +228,7 @@ def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
     pdf.set_fill_color(255, 255, 255)
     pdf.set_font("Arial", size=12)
     pdf.cell(15, 20, txt=f"1", border="L, R,T", ln=0, align="C", fill=True)
-    pdf.cell(20, 20, txt=f"{structure_costs}", border="L,R,T", ln=1, align="R", fill=True)  
+    pdf.cell(20, 20, txt=f"{int(float(structure_costs))}", border="L,R,T", ln=1, align="R", fill=True)  
     pdf.cell(15, 10, txt="", border=0)  # Empty cell to create space
     pdf.cell(190, 10, txt=f"Customized frames with steel pipes & Chanels 14 guage and painting for 18 panels", border=1, ln=0, align="L", fill=True)
     pdf.cell(15, 10, txt="", border="L,R,B")  # Empty cell to create space
@@ -201,7 +245,7 @@ def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
     pdf.cell(15, 10, txt="", border=0)  # Empty cell to create space
     pdf.cell(190, 10, txt=f"AC/DC Cable Trau, Flexible Pipes, Conduits, Rawal Bolts, Cable Ties, Lugs & other accessories", border=1, ln=0, align="L", fill=True)
     pdf.cell(15, 10, txt="1", border="L,R", align="C")  # Empty cell to create space
-    pdf.cell(20, 10, txt=f"{installation_costs}", border="L,R", ln=1, align="R")  # Empty cell to create space
+    pdf.cell(20, 10, txt=f"{int(float(installation_costs))}", border="L,R", ln=1, align="R")  # Empty cell to create space
     pdf.cell(15, 10, txt="", border=0)  # Empty cell to create space
     pdf.cell(190, 10, txt=f"Transportation Cost", border=1, ln=0, align="L", fill=True)
     pdf.cell(15, 10, txt="", border="L,R")  # Empty cell to create space
@@ -218,7 +262,7 @@ def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
     pdf.set_fill_color(255, 255, 255)
     pdf.set_font("Arial", size=12)
     pdf.cell(15, 20, txt=f"1", border="L, R,T", ln=0, align="C", fill=True)
-    pdf.cell(20, 20, txt=f"{electrical_and_mechanical_costs}", border="L,R,T", ln=1, align="R", fill=True)  
+    pdf.cell(20, 20, txt=f"{int(float(electrical_and_mechanical_costs))}", border="L,R,T", ln=1, align="R", fill=True)  
     pdf.cell(15, 10, txt="", border=0)  # Empty cell to create space
     pdf.cell(190, 10, txt=f"Electrical & Mechanical work", border=1, ln=0, align="L", fill=True)
     pdf.cell(15, 10, txt="", border="L,R,B")  # Empty cell to create space
@@ -227,7 +271,7 @@ def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
     pdf.cell(15, 40, txt="7", border=1, ln=0, align="C", fill=True)
     pdf.set_fill_color(255, 255, 0)
     pdf.set_font("Arial", size=16)
-    pdf.cell(190, 20, txt="PV Panels", border=1, ln=0, align="C", fill=True)
+    pdf.cell(190, 20, txt="Netmetering", border=1, ln=0, align="C", fill=True)
     pdf.set_fill_color(255, 255, 255)
     pdf.set_font("Arial", size=12)
     pdf.cell(15, 20, txt=f"", border="L, R,T", ln=0, align="C", fill=True)
@@ -236,7 +280,7 @@ def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
     pdf.cell(95, 10, txt=f"Preparation of file - Dealing with MEPCO", border=1, ln=0, align="L", fill=True)
     pdf.cell(95, 10, txt=f"2 Reverse meters supply", border=1, ln=0, align="L", fill=True)
     pdf.cell(15, 10, txt="1", border="L,R" , align="C")  # Empty cell to create space
-    pdf.cell(20, 10, txt=f"{netmetering_costs}", border="L,R", ln=1, align="R")  # Empty cell to create space
+    pdf.cell(20, 10, txt=f"{int(float(netmetering_costs))}", border="L,R", ln=1, align="R")  # Empty cell to create space
     pdf.cell(15, 10, txt="", border=0)  # Empty cell to create space
     pdf.cell(190, 10, txt=f"Load extension / Main wire from green meters to Main DB of house in the scope of client", border=1, ln=0, align="L", fill=True)
     pdf.cell(15, 10, txt="", border="L,R,B")  # Empty cell to create space
@@ -245,9 +289,9 @@ def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
     pdf.set_fill_color(0, 128, 0)
     pdf.set_font("Arial", size=15)
     pdf.cell(205, 20, txt=f"Total System Cost:",border=1, ln=0, align="C", fill=True)
-    pdf.cell(35, 20, txt=f"{total_cost}", border=1, ln=1, align="C", fill=True)
-    pdf.cell(205, 20, txt=f"90% Advance Payment and 10% after testing commissioing:", border=1, ln=0, align="C", fill=True)
-    pdf.cell(35, 20, txt=f"{advance_payment}", border=1, ln=1, align="C", fill=True)
+    pdf.cell(35, 20, txt=f"{int(total_cost)}", border=1, ln=1, align="C", fill=True)
+    pdf.cell(205, 20, txt=f"90% Advance Payment and 10% after testing commissioning:", border=1, ln=0, align="C", fill=True)
+    pdf.cell(35, 20, txt=f"{int(advance_payment)}", border=1, ln=1, align="C", fill=True)
 
 
     def get_resource_path(relative_path):
@@ -309,7 +353,11 @@ def generate_invoice(system_size, panel_amount, panel_power, price_of_inverter,
     # Replace text in the final PDF
     # Replace text in the final PDF
     replace_text(intermediate_pdf, output_file_path, replacements)
-    os.startfile(output_file_path)
+    subject = "Your Invoice"
+    body = "Please find your invoice attached."
+    to_email = "abdullah123ahmad@gmail.com"  # replace with the customer's email
+
+    send_email_with_attachment(subject, body, to_email, output_file_path)
 
     # Open the final PDF file
     
