@@ -21,8 +21,7 @@ def get_bill_info(reference_number, city):
         }
     )
 
-    driver_path = 'C:\chromedriver-win64\chromedriver.exe'
-    driver = webdriver.Chrome(service=ChromeService(driver_path), options=options)
+    driver = webdriver.Chrome(options=options)
     
     try:
         url = "https://bill.pitc.com.pk/mepcobill"
