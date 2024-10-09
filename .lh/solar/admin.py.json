@@ -1,0 +1,18 @@
+{
+    "sourceFile": "solar/admin.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1728483914021,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1728483914021,
+            "name": "Commit-0",
+            "content": "from django.contrib import admin\r\nfrom .models import Panel, Inverter, PotentialCustomers, variableCosts\r\n\r\nclass PanelAdmin(admin.ModelAdmin):\r\n    list_display = ('brand', 'price', 'power')\r\n    \r\nclass InverterAdmin(admin.ModelAdmin):\r\n    list_display = ('brand', 'price', 'power')\r\n    \r\nclass PotentialCustomersAdmin(admin.ModelAdmin):\r\n    list_display = ('name', 'phone', 'reference_number')    \r\n\r\nclass variableCostsAdmin(admin.ModelAdmin):\r\n    list_display = ('cost_name', 'cost')\r\n\r\n# Register your models here.\r\nadmin.site.register(Panel, PanelAdmin)\r\nadmin.site.register(Inverter, InverterAdmin)\r\nadmin.site.register(PotentialCustomers, PotentialCustomersAdmin)\r\nadmin.site.register(variableCosts, variableCostsAdmin)"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "text_chromium.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1728484708339,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1728484708339,
+            "name": "Commit-0",
+            "content": "from selenium import webdriver\r\n\r\n# Since ChromeDriver is in the system's PATH, no need to specify the path\r\ndriver = webdriver.Chrome()\r\n\r\n# Example of opening a webpage\r\ndriver.get(\"https://www.google.com\")\r\n"
+        }
+    ]
+}
