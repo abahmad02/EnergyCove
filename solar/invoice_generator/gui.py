@@ -27,12 +27,29 @@ def generate_pdf():
 def calculate_cost():
     pricePerWatt = int(price_per_watt_entry.get())
     system_size = int(system_size_entry.get()) * 1000
-    panel_watt = int(panel_watt_entry.get())
+    # Calculations for system sizing
+    # The Yearly average units are calculated using the history of units in the bill
+   ''' yearly_units_average = 15000  # this will be calculated from the history of the bill
+    system_size_kw = (yearly_units_average / 365) / 4  # In Pakistan, 1 kW produces around 4 units
+    system_size_recommended = system_size_kw * 1.3  # 40% bump to provided recommended
+    system_size_larger = system_size_kw * 1.6  # 60% bump to provided recommended
+    system_size_recommended = math.ceil(system_size_recommended)
+    system_size_larger = math.ceil(system_size_larger)
+    '''
+
+
+    
+    # This wattage is based on the wattage based in inventory of panels
+    panel_watt = int(panel_watt_entry.get()) 
     number_panels = round(system_size / panel_watt)
+    # Manual input from company side panel
     Price_per_watt_panels = int(price_per_watt_panels_entry.get())
+
     price_per_panel = panel_watt * Price_per_watt_panels
     total_panel_cost = number_panels * price_per_panel
+    # These will be based on inventory from company side
     inverter_brand = selected_brand.get()
+    # This inverter Count will be done based on system sizing automatically
     inverter_count = int(inverter_count_entry.get())
     inverter_cost = int(inverter_cost_entry.get())
     labor_cost = int(labor_cost_entry.get()) * system_size
@@ -57,6 +74,7 @@ def calculate_cost():
     print(f"Frame per Watt: {frame_per_watt}")
     print(f"Net Metering Cost: {net_metering_cost}")
 
+    
     # Calculate the total cost
     total_cost = total_cost_frame + total_panel_cost + (inverter_cost * inverter_count) + labor_cost + net_metering_cost
     Price_quoted = pricePerWatt * system_size
