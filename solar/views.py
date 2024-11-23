@@ -2,13 +2,50 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from solar.invoice_generator.Bill_Reader import bill_reader
 from solar.invoice_generator.invoicemaker import generate_invoice
+from solar.invoice_generator.bill_verify import verify_bill
 from solar.models import Panel, Inverter, PotentialCustomers, variableCosts
 import math
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 import json
+
+class BillValidateAPIView(APIView):
+    def post(self, request):
+        # Log the incoming request data
+        print(f"Request Data: {request.data}")
+
+        reference_number = request.data.get("referenceNumber")
+        if not reference_number:
+            return Response({
+                "status": "error",
+                "message": "Reference number is required.",
+                "isValid": False
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Call the verify_bill function to check the status
+        status_result = verify_bill(reference_number)
+        
+        if status_result['exists']:
+            print(f"Bill is valid. Source URL: {status_result.get('source_url', '')}")
+            return Response({
+                "status": "success",
+                "message": "Bill is valid.",
+                "reference_number": reference_number,
+                "isValid": True,
+                "source_url": status_result.get("source_url", "")
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                "status": "error",
+                "message": status_result.get("message", "Bill not found."),
+                "isValid": False
+            }, status=status.HTTP_400_BAD_REQUEST)
+
 
 def index(request):
     return render(request, 'solar/index.html')
