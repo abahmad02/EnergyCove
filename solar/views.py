@@ -3,6 +3,7 @@ from django.urls import reverse
 from solar.invoice_generator.Bill_Reader import bill_reader
 from solar.invoice_generator.invoicemaker import generate_invoice
 from solar.invoice_generator.bill_verify import verify_bill
+from solar.invoice_generator.bill_parser import parse_electricity_bill
 from solar.models import Panel, Inverter, PotentialCustomers, variableCosts
 import math
 from django.http import JsonResponse
@@ -87,10 +88,10 @@ class GetBillDataAPIView(APIView):
 
         # Optional: clean up escape sequences
         html_content = html_content.replace("\r", "").replace("\n", "")
-
+        json_data = parse_electricity_bill(html_content)
         return Response({
             "status": "success",
-            "data": html_content
+            "data": json_data
         }, status=status.HTTP_200_OK)
     
 def index(request):
