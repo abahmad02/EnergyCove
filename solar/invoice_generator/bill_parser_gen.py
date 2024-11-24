@@ -29,15 +29,15 @@ def extract_monthly_units(soup, year_data):
         
         for table in tables:
             headers = [td.get_text(strip=True).upper() for td in table.find_all("td")]
-            #print(f"Headers found: {headers}")  # Debug: Print headers to verify structure
+            print(f"Headers found: {headers}")  # Debug: Print headers to verify structure
             
             # Check if the table has months and KWH UNITS columns
-            if "MONTH" in headers and "KWH UNITS" in headers:
+            if "MONTH" in headers and "UNITS" in headers:
                 target_table = table
                 break
 
         if not target_table:
-            #print("Monthly units table not found.")
+            print("Monthly units table not found.")
             return {month: "0" for month in year_data}
 
         # Extract rows from the table
@@ -45,9 +45,9 @@ def extract_monthly_units(soup, year_data):
         monthly_units = {}
 
         # Debugging: Print all rows to understand the table structure
-        #print("Table rows:")
-        #for row in rows:
-            #print([td.get_text(strip=True) for td in row.find_all("td")])
+        print("Table rows:")
+        for row in rows:
+            print([td.get_text(strip=True) for td in row.find_all("td")])
 
         # Iterate over the rows (skip the header row)
         for row in rows[1:]:
@@ -65,8 +65,8 @@ def extract_monthly_units(soup, year_data):
                         month_index = year_data.index(month)
                         
                         # Extract the corresponding KWH UNITS (2 columns after the month)
-                        if len(cells) > 2:
-                            units = cells[2].get_text(strip=True)
+                        if len(cells) > 1:
+                            units = cells[1].get_text(strip=True)
                             monthly_units[month] = units if units.isdigit() else "0"
 
         print(f"Extracted Monthly Units: {monthly_units}")
@@ -80,11 +80,11 @@ def extract_monthly_units(soup, year_data):
 
 
 
-def parse_electricity_bill(html_content):
+def parse_electricity_bill_general(html_content):
     soup = BeautifulSoup(html_content, "html.parser")
 
     name_section = soup.find(string=lambda s: "NAME & ADDRESS" in s if s else False)
-    name = name_section.find_next("td").get_text(strip=True).replace("\n", "") if name_section else "Not Found"
+    name = name_section.find_next("span").get_text(strip=True).replace("\n", "") if name_section else "Not Found"
 
     print(f"Name extracted: {name}")
 
@@ -101,17 +101,15 @@ def parse_electricity_bill(html_content):
     print(f"Payable Within Due Date extracted: {payable_due_date}")
 
     # Extract Units Consumed (Current month)
-    units_consumed = "Not Found"
-    units_section = soup.find(string=lambda s: "UNITS CONSUMED" in s if s else False)
+    units_section = soup.find('b', string=lambda text: text and 'UNITS CONSUMED' in text)
+        
+    # Find the following td to get the units consumed value
     if units_section:
-        # The units consumed is in 'b' tag inside the 'td'
-        parent_td = units_section.find_parent("td")
-        if parent_td:
-            b_tag = parent_td.find("b")
-            if b_tag:
-                units_consumed = b_tag.get_text(strip=True)
+        units_consumed = units_section.find_next('td').text.strip()
+        print(units_consumed)
     else:
-        print("Units Consumed section not found")
+        units_consumed = "Not Found"
+        print(units_consumed)
 
     print(f"Units Consumed extracted: {units_consumed}")
 
@@ -199,5 +197,5 @@ def parse_electricity_bill(html_content):
 if __name__ == "__main__":
     with open("text.txt", "r", encoding="utf-8") as file:
         html_content = file.read()
-    result = parse_electricity_bill(html_content)
+    result = parse_electricity_bill_general(html_content)
     print(result)

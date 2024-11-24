@@ -3,7 +3,8 @@ from django.urls import reverse
 from solar.invoice_generator.Bill_Reader import bill_reader
 from solar.invoice_generator.invoicemaker import generate_invoice
 from solar.invoice_generator.bill_verify import verify_bill
-from solar.invoice_generator.bill_parser import parse_electricity_bill
+from solar.invoice_generator.bill_parser_ind import parse_electricity_bill_industrial
+from solar.invoice_generator.bill_parser_gen import parse_electricity_bill_general
 from solar.models import Panel, Inverter, PotentialCustomers, variableCosts
 import math
 from django.http import JsonResponse
@@ -88,7 +89,11 @@ class GetBillDataAPIView(APIView):
 
         # Optional: clean up escape sequences
         html_content = html_content.replace("\r", "").replace("\n", "")
-        json_data = parse_electricity_bill(html_content)
+        print(html_content)
+        if (status_result['source_url'] == "https://bill.pitc.com.pk/mepcobill/industrial"):
+            json_data = parse_electricity_bill_industrial(html_content)
+        else:
+            json_data = parse_electricity_bill_general(html_content)
         return Response({
             "status": "success",
             "data": json_data
@@ -107,7 +112,7 @@ def generate_invoice_view(request):
         address = request.POST.get('address')
         
         try:
-            invoice_data = bill_reader(reference_number, address)
+            invoice_data = bill_reader(reference_number)
             name = invoice_data['Name']
             #panel_power = 545  # 545 watts per panel
             panel = Panel.objects.get(default_choice=True)
