@@ -9,7 +9,7 @@ from selenium.webdriver.chrome.options import Options
 
 import datetime
 
-def get_bill_info(reference_number, city):
+def get_bill_info(reference_number):
     options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
@@ -52,19 +52,6 @@ def get_bill_info(reference_number, city):
             'Due Date': extract_due_date(driver),
             'Subdivision': subdivision
         }
-
-        if subdivision != "Not found":
-            location = city
-            print(f"Location: {location}")
-            #latitude, longitude = get_coordinates(location)
-            #bill_info['Latitude'] = latitude
-            #bill_info['Longitude'] = longitude
-
-            #if latitude and longitude:
-                #st_date = 2022
-                #data = get_nasa_power_monthly_data(latitude, longitude, st_date, st_date, "ALLSKY_SFC_SW_DWN")
-                #solar_irradiance = extract_solar_radiance_data(data)
-                #bill_info['Solar Irradiance'] = solar_irradiance
 
         # Generate the array of months
         if bill_info['Issue Date'] != "Not found":
@@ -241,16 +228,14 @@ def calculate_total_units(driver, monthly_units):
         print(f"Error calculating total units: {e}")
         return "Error"
 
-def bill_reader(reference_number, address):
-    city = 'Multan'  # Replace with the actual city
-    address = address + ", " + city
-    bill_info = get_bill_info(reference_number, address)
-    #print(bill_info)
+def bill_reader(reference_number):
+    bill_info = get_bill_info(reference_number)
+    print(bill_info)
     print("Done")
     return(bill_info)
     # Call the function from invoicemaker.py
     # create_invoice_from_bill_info(bill_info)
 
 if __name__ == '__main__':
-    reference_number = '04151722337322'  # Replace with the actual reference number
-    bill_reader(reference_number, "Shop 1,Crystal Arcade")
+    reference_number = '31151730146203'  # Replace with the actual reference number
+    bill_reader(reference_number)

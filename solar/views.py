@@ -13,6 +13,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 import json
+import requests
+from bs4 import BeautifulSoup
 
 class BillValidateAPIView(APIView):
     def post(self, request):
@@ -46,7 +48,51 @@ class BillValidateAPIView(APIView):
                 "isValid": False
             }, status=status.HTTP_400_BAD_REQUEST)
 
+class GetBillDataAPIView(APIView):
+    def get(self, request, reference_number):
+        if not reference_number:
+            return Response({
+                "status": "error",
+                "message": "Reference number is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        status_result = verify_bill(reference_number)
+        if not status_result['exists']:
+            return Response({
+                "status": "error",
+                "message": "Bill not found."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        url = status_result.get("source_url")
+        if not url:
+            return Response({
+                "status": "error",
+                "message": "Valid URL not found."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        full_url = f"{url}?refno={reference_number}"
+
+        try:
+            response = requests.get(full_url)
+            response.raise_for_status()
+            response.encoding = response.apparent_encoding  # Ensure proper encoding
+        except requests.RequestException as e:
+            return Response({
+                "status": "error",
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        soup = BeautifulSoup(response.text, 'html.parser')  # Use .text for decoded content
+        html_content = soup.prettify()
+
+        # Optional: clean up escape sequences
+        html_content = html_content.replace("\r", "").replace("\n", "")
+
+        return Response({
+            "status": "success",
+            "data": html_content
+        }, status=status.HTTP_200_OK)
+    
 def index(request):
     return render(request, 'solar/index.html')
 
