@@ -29,7 +29,7 @@ def extract_monthly_units(soup, year_data):
         
         for table in tables:
             headers = [td.get_text(strip=True).upper() for td in table.find_all("td")]
-            print(f"Headers found: {headers}")  # Debug: Print headers to verify structure
+            #print(f"Headers found: {headers}")  # Debug: Print headers to verify structure
             
             # Check if the table has months and KWH UNITS columns
             if "MONTH" in headers and "UNITS" in headers:
@@ -46,8 +46,8 @@ def extract_monthly_units(soup, year_data):
 
         # Debugging: Print all rows to understand the table structure
         print("Table rows:")
-        for row in rows:
-            print([td.get_text(strip=True) for td in row.find_all("td")])
+        #for row in rows:
+            #print([td.get_text(strip=True) for td in row.find_all("td")])
 
         # Iterate over the rows (skip the header row)
         for row in rows[1:]:
@@ -69,7 +69,7 @@ def extract_monthly_units(soup, year_data):
                             units = cells[1].get_text(strip=True)
                             monthly_units[month] = units if units.isdigit() else "0"
 
-        print(f"Extracted Monthly Units: {monthly_units}")
+        #print(f"Extracted Monthly Units: {monthly_units}")
 
         # Ensure all months in year_data are covered
         return {month: monthly_units.get(month, "0") for month in year_data}

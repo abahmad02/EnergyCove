@@ -89,7 +89,7 @@ class GetBillDataAPIView(APIView):
 
         # Optional: clean up escape sequences
         html_content = html_content.replace("\r", "").replace("\n", "")
-        print(html_content)
+        #print(html_content)
         if (status_result['source_url'] == "https://bill.pitc.com.pk/mepcobill/industrial"):
             json_data = parse_electricity_bill_industrial(html_content)
         else:
