@@ -94,6 +94,19 @@ class GetBillDataAPIView(APIView):
             json_data = parse_electricity_bill_industrial(html_content)
         else:
             json_data = parse_electricity_bill_general(html_content)
+
+        yearly_units = int(json_data['Total Yearly Units'])
+        yearly_avg = yearly_units / 12
+
+        print(yearly_avg)
+        system_size_kw = (yearly_avg / 30) / 4
+        print(system_size_kw)
+        system_size_recommended = math.ceil(system_size_kw * 1.5)
+        system_size_smaller = math.ceil(system_size_kw * 1.3)
+        system_size_larger = math.ceil(system_size_kw * 1.7)
+        json_data['Recommended System Size'] = system_size_recommended
+        json_data['Smaller System Size'] = system_size_smaller
+        json_data['Larger System Size'] = system_size_larger  
         return Response({
             "status": "success",
             "data": json_data
@@ -105,6 +118,7 @@ def index(request):
 def quotation(request):
     return render(request, 'solar/quotation.html')
 
+#DEPRECATED
 def generate_invoice_view(request):
     if request.method == 'POST':
         reference_number = request.POST.get('reference_number')
