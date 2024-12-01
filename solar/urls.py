@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import BillValidateAPIView, GetBillDataAPIView
+from .views import BillValidateAPIView, GetBillDataAPIView, GenerateInvoiceForSystem
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -8,7 +8,7 @@ urlpatterns = [
     path('api/bill/validate/', BillValidateAPIView.as_view(), name='bill_validate'),
     path('api/bill/<str:reference_number>/', GetBillDataAPIView.as_view(), name='get_bill_data'),
     path('generate_invoice_view/', views.generate_invoice_view, name='generate_invoice_view'),
-    path('generate_invoice_for_system', views.generate_invoice_for_system, name='generate_invoice_for_system'),
+    path('api/quote/<int:system_size>/', GenerateInvoiceForSystem.as_view(), name='get_quote_data'),
     path('control_panel/', views.control_panel, name='control_panel'),
     path('api/panels/', views.panel_list),
     path('api/panels/<int:id>/', views.panel_detail),

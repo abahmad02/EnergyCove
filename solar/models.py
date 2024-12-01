@@ -19,8 +19,13 @@ class variableCosts(models.Model):
     cost = models.DecimalField(max_digits=10, decimal_places=2)
     
 class PotentialCustomers(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=15)
     phone = models.CharField(max_length=11)
     address = models.TextField()
     reference_number = models.CharField(max_length=14)
     date = models.DateTimeField(default=datetime.now)
+
+class BracketCosts(models.Model):
+    Type = models.CharField(max_length=15)
+    SystemRange = models.IntegerField()
+    cost = models.DecimalField(max_digits=10, decimal_places=2)

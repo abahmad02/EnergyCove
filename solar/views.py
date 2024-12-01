@@ -5,7 +5,7 @@ from solar.invoice_generator.invoicemaker import generate_invoice
 from solar.invoice_generator.bill_verify import verify_bill
 from solar.invoice_generator.bill_parser_ind import parse_electricity_bill_industrial
 from solar.invoice_generator.bill_parser_gen import parse_electricity_bill_general
-from solar.models import Panel, Inverter, PotentialCustomers, variableCosts
+from solar.models import Panel, Inverter, PotentialCustomers, variableCosts, BracketCosts
 import math
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
@@ -180,6 +180,7 @@ def generate_invoice_view(request):
             
             cabling_cost = 50000
             electrical_and_mechanical_cost = 50000
+
             # Total cost calculation for each system
             def calculate_total_cost(system_size, inverter_price, installation_cost, frame_cost):
                 print(system_size, inverter_price, installation_cost, frame_cost)
@@ -255,57 +256,112 @@ def generate_invoice_view(request):
 
     return redirect(reverse('your_form_page_name'))
 
-def generate_invoice_for_system(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        system_size = data.get('system_size')
-        panel_amount = data.get('panel_amount')
-        panel_power = data.get('panel_power')
-        inverter_price = data.get('inverter_price')
-        inverter_brand = data.get('inverter_brand')
-        print(data.get('panel_price'))
-        price_of_panels = float(data.get('panel_price')) * int(panel_amount) * float(panel_power)
-        net_metering = data.get('net_metering')
-        total_cost = data.get('total_cost')
-        if total_cost is not None:
-            try:
-                total_cost = float(total_cost)
-            except ValueError:
-                total_cost = 0.0  # or any default value you prefer
-        else:
-            total_cost = 0.0
-        customer_name = data.get('customer_name')
-        print(customer_name)
-        customer_address = data.get('customer_address')
-        customer_contact = data.get('customer_contact')
-        installation_cost_per_watt = data.get('installation_cost')
-        frame_cost_per_watt = data.get('frame_cost')
-        cabling_cost = data.get('cabling_cost')
-        electrical_and_mechanical_cost = data.get('electrical_and_mechanical_cost')
-        #generate_invoice(system_size, panel_amount, panel_power, inverter_price, inverter_brand, price_of_panels, net_metering, installation_cost_per_watt, cabling_cost, frame_cost_per_watt, electrical_and_mechanical_cost, total_cost, customer_name, customer_address, customer_contact)
-        invoice_data = {
-            'system_size': system_size,
-            'panel_amount': panel_amount,
-            'panel_power': panel_power,
-            'inverter_price': inverter_price,
-            'inverter_brand': inverter_brand,
-            'price_of_panels': price_of_panels,
-            'net_metering': net_metering,
-            'total_cost': total_cost,
-            'customer_name': customer_name,
-            'customer_address': customer_address,
-            'customer_contact': customer_contact,
-            'installation_cost_per_watt': installation_cost_per_watt,
-            'frame_cost_per_watt': frame_cost_per_watt,
-            'cabling_cost': cabling_cost,
-            'electrical_and_mechanical_cost': electrical_and_mechanical_cost
-        }
-        # Logic to generate the invoice based on the data
-        # Example: Create an invoice record, generate a PDF, etc.
+class GenerateInvoiceForSystem(APIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            # Extract system_size from the kwargs
+            system_size = int(kwargs.get('system_size', 0))
+            if not system_size:
+                return Response({'error': 'No system size provided'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # The rest of your logic remains the same
+            panel = Panel.objects.get(default_choice=True)
+            panel_power = panel.power
+            panel_price = panel.price
+            panel_brand = panel.brand
+            panels_needed = math.ceil((system_size * 1000) / panel_power)
+            inverters = Inverter.objects.filter(power__gte=system_size).order_by('power')
+            if inverters.exists():
+                inverter = inverters.first()
+                inverter_price = inverter.price
+                inverter_brand = inverter.brand
+            else:
+                # Handle the case when no inverter is available with the required power
+                inverter_price = 0
+           # variableCosts queries with validation
+            net_metering_record = variableCosts.objects.filter(cost_name='Net Metering').first()
+            if not net_metering_record:
+                return Response({'error': 'Net Metering cost is missing in the database'}, status=status.HTTP_400_BAD_REQUEST)
+            net_metering = net_metering_record.cost
 
-        # Return a success response
-        return JsonResponse(invoice_data)
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+            installation_cost_record = variableCosts.objects.filter(cost_name='Installation Cost per Watt').first()
+            if not installation_cost_record:
+                return Response({'error': 'Installation Cost per Watt is missing in the database'}, status=status.HTTP_400_BAD_REQUEST)
+            installation_cost_per_watt = installation_cost_record.cost
+            total_installation_cost = installation_cost_per_watt * system_size * 1000
+
+            frame_cost_record = variableCosts.objects.filter(cost_name='Frame Cost per Watt').first()
+            if not frame_cost_record:
+                return Response({'error': 'Frame Cost per Watt is missing in the database'}, status=status.HTTP_400_BAD_REQUEST)
+            frame_cost_per_watt = frame_cost_record.cost
+            total_frame_cost = frame_cost_per_watt * system_size * 1000
+
+            labor_cost_record = variableCosts.objects.filter(cost_name='Labor Cost').first()
+            if not labor_cost_record:
+                return Response({'error': 'Labor Cost is missing in the database'}, status=status.HTTP_400_BAD_REQUEST)
+            labor_cost = labor_cost_record.cost
+            total_labor_cost = labor_cost * system_size * 1000
+
+            # BracketCosts queries with validation
+            DC_Cable_Costs = BracketCosts.objects.filter(Type='DC Cables').order_by('SystemRange')
+            print(DC_Cable_Costs)
+            selected_DC_Cable_Cost = None
+            for cost in DC_Cable_Costs:
+                print(cost.SystemRange)
+                print(system_size)
+                if cost.SystemRange <= system_size:
+                    selected_DC_Cable_Cost = cost
+                    print(selected_DC_Cable_Cost, "Has been selected")
+                else:
+                    break
+            if not selected_DC_Cable_Cost:
+                return Response({'error': 'DC Cable cost is missing or not suitable for the system size'}, status=status.HTTP_400_BAD_REQUEST)
+
+            AC_Cable_Costs = BracketCosts.objects.filter(Type='AC Cables').order_by('SystemRange')
+            selected_AC_Cable_Cost = None
+            for cost in AC_Cable_Costs:
+                if cost.SystemRange <= system_size:
+                    selected_AC_Cable_Cost = cost
+                else:
+                    break
+            if not selected_AC_Cable_Cost:
+                return Response({'error': 'AC Cable cost is missing or not suitable for the system size'}, status=status.HTTP_400_BAD_REQUEST)
+
+            Accessories_Costs = BracketCosts.objects.filter(Type='Accessories').order_by('SystemRange')
+            selected_Accessories_Cost = None
+            for cost in Accessories_Costs:
+                if cost.SystemRange <= system_size:
+                    selected_Accessories_Cost = cost
+                else:
+                    break
+            if not selected_Accessories_Cost:
+                return Response({'error': 'Accessories cost is missing or not suitable for the system size'}, status=status.HTTP_400_BAD_REQUEST)
+
+            
+            total_cost = (panels_needed * panel_price) + inverter_price + net_metering + total_installation_cost + total_frame_cost + selected_DC_Cable_Cost.cost + selected_AC_Cable_Cost.cost + selected_Accessories_Cost.cost + total_labor_cost
+            # Your logic to generate invoice based on input_string
+            invoice_data = {
+                'panel_price': panel_price,
+                'panel_brand': panel_brand,
+                'panel_power': panel_power,
+                'panels_needed': panels_needed,
+                'inverter_brand': inverter_brand,
+                'inverter_price': inverter_price,
+                'net_metering': net_metering,
+                'installation_cost': total_installation_cost,
+                'frame_cost': total_frame_cost,
+                'dc_cable_cost': selected_DC_Cable_Cost.cost,
+                'ac_cable_cost': selected_AC_Cable_Cost.cost,
+                'accessories_cost': selected_Accessories_Cost.cost,
+                'labor_cost': total_labor_cost,
+                'total_cost': total_cost,
+                'invoice': 'Generated invoice data here'  # Replace with actual invoice generation logic
+            }
+            
+            return Response(invoice_data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 #@user_passes_test(lambda u: u.is_staff)
 def control_panel(request):
